@@ -25,7 +25,7 @@ LICENSE
 
 This software is licensed under the Affero GNU General Public License v3 and above (AGPLv3+).
 
-This software uses the PclZip Library under the LGPLv2.1+ and the Plupload library under the GPLv2.
+This software uses the PclZip Library under the LGPLv2.1+, the Plupload library under the GPLv2 and the tga.php library by de77 (de77.com) under the MIT license.
 
 INSTALL
 -------
@@ -87,3 +87,5 @@ This software uses the nice PclZip library by Vincent Blavet. You can easily upd
 Thank's to Michal Migurski for the JSON library (which works on both php 4 and 5 versions, that's great!).
 
 This software uses the Plupload library to manage the nice AJAX uploading form. This library is well done, compatible with nearly all browsers and a wide array of technologies, is very simple to use and has a lot of configuration options.
+
+Thank's too to de77, the author of the tga.php library (the only really working pure php library to read tga images that I could find on the net). Check out his website: de77.com

@@ -23,13 +23,16 @@
  */
 
 // Include zip files management library PCLZip (works on many versions of PHP)
-require_once('lib/pclzip.lib.php');
+require_once(dirname(__FILE__).'/lib/pclzip.lib.php');
 
 // Include JSON library for PHP <= 5.2 (used to define json_decode() and json_encode() for PHP4)
 if( !function_exists('json_decode') or !function_exists('json_encode') ) include_once(dirname(__FILE__).'/lib/JSON.php');
 
 // Include password hash generation/checking library (cryptographic library)
-include_once('lib-crypt.php');
+include_once(dirname(__FILE__).'/lib-crypt.php');
+
+// Include the tga reading library
+include_once(dirname(__FILE__).'/lib/tga.php');
 
 // Nomenclatura for naming:
 // * function: action first, then object. Eg: listFiles, the opposite for the variable since it's not a verb anymore but an object: filesList
@@ -713,56 +716,10 @@ function printTime($secs, $nosingleterm=false){
     return $ret;
 }
 
-// Convert any tga image to anything we want
-// Thank's to the anonymous poster on php.net manual! Amazing function, if you read this, kudos!
-function tga2jpg ($image)
-{
-    $handle = fopen($image, "rb");
-    $data = fread($handle, filesize($image));
-    fclose($handle);
-
-    $pointer = 18;
-    $w = fileint (substr ($data, 12, 2));
-    $h = fileint (substr ($data, 14, 2));
-    $x = 0;
-    $y = $h;
-
-    $img = imagecreatetruecolor($w, $h);
-
-    while ($pointer < strlen($data))
-    {
-        imagesetpixel ($img, $x, $y, fileint (substr ($data, $pointer, 3)));
-
-        $x++;
-
-        if ($x == $w)
-        {
-            $y--;
-            $x = 0;
-        }
-
-        $pointer += 3;
-    }
-
-    for($a = 0; $a < imagecolorstotal ($img); $a++)
-    {
-        $color = imagecolorsforindex ($img, $a);
-
-        $R=.299 * ($color['red'])+ .587 * ($color['green'])+ .114 * ($color['blue']);
-        $G=.299 * ($color['red'])+ .587 * ($color['green'])+ .114 * ($color['blue']);
-        $B=.299 * ($color['red'])+ .587 * ($color['green'])+ .114 * ($color['blue']);
-
-        imagecolorset ($img, $a, $R, $G, $B);
-    }
-
-    imagejpeg ($img, substr($image, 0, -4).'.jpg', 100);
-    imagedestroy ($img);
-}
-
-// Necessary for tga2jpg
-function fileint($str)
-{
-    return base_convert (bin2hex (strrev ($str)), 16, 10);
+// Converts a tga to a jpg
+function tga2jpg($imgfullpath) {
+    $img = imagecreatefromtga($imgfullpath);
+    imagejpeg($img, substr($imgfullpath, 0, -4).'.jpg', 100);
 }
 
 ?>
