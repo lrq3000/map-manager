@@ -1,12 +1,13 @@
 MAP-MANAGER README v1.0
 =======================
+Map-Manager is a PHP5 web application to let users upload, list and manage maps that will then be uploaded onto your game server (any ioquake3 compatible game, eg: OpenArena, ioUrban Terror, Smoking Guns, Enemy Territory, Warsow, Tremulous, etc..)
 
 DESCRIPTION
 -----------
 
 This software is a PHP5 web application designed to offer the clients the possibility to securely and flexibly upload maps on your game server via a secure web form.
 
-It is designed to work for Quake 3 Arena and ioquake3 compatible games (eg: OpenArena, Urban Terror, Smoking Guns, PadMan, Warsow, Enemy Territory, etc..)
+It is designed to work for Quake 3 Arena and ioquake3 compatible games (eg: OpenArena, Urban Terror, Smoking Guns, PadMan, Warsow, Tremulous, Enemy Territory, etc..). This may also work for games based on other engines with little modifications (except if the maps are not zip compressed, in this case you'll have to plug in your own archive reading library).
 
 The whole application is designed to be the most secure possible and avoid abuses.
 
