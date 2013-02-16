@@ -126,15 +126,15 @@ if ($rtncode < 0) {
     }
 }
 
-// == Thumbnail (levelshot) extraction
-list($rtncode, $rtnmsg) = extractThumbnailAndInfos($fullpath, $ziplist);
+// == ReBuild bsplist index file
+list($rtncode, $rtnmsg) = rebuildIndexFile();
 if ($rtncode < 0) {
     printAndLog("Error: $filename $rtnmsg");
     $error++;
 }
 
-// == ReBuild index file
-list($rtncode, $rtnmsg) = rebuildIndexFile();
+// == Thumbnail (levelshot) extraction (this has to be done after rebuilding the index file, so that extended info can be appended like the arena data)
+list($rtncode, $rtnmsg) = extractThumbnailAndInfos($fullpath, $ziplist);
 if ($rtncode < 0) {
     printAndLog("Error: $filename $rtnmsg");
     $error++;

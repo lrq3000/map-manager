@@ -114,7 +114,7 @@ function checkFile($filename, $dir=null, $ziplist=null) {
     // == Check blacklist filename
     if (!empty($conf['blacklist_filename'])) {
         foreach ($conf['blacklist_filename'] as $bword) {
-            if ( !(strpos($filename, $bword) === FALSE) ) return array(-1, "This filename ($filename) is not allowed");
+            if ( stripos($filename, $bword) !== FALSE ) return array(-1, "This filename ($filename) is not allowed");
         }
     }
 
@@ -163,7 +163,7 @@ function checkFile($filename, $dir=null, $ziplist=null) {
     // == Check duplicates
     $fileslist = listFiles($conf['storagedir']);
     foreach ($fileslist as $file) {
-        if ( !strcmp($filename, $file) ) return array(-1, "File $filename is a duplicate, please use another name.");
+        if ( !strcmp(strtolower($filename), strtolower($file)) ) return array(-1, "File $filename is a duplicate, please use another name.");
     }
 
     // == Check bsp duplicates
@@ -175,13 +175,15 @@ function checkFile($filename, $dir=null, $ziplist=null) {
 
     $valid = true;
     // We compare each bsp in the new uploaded pk3, against every bsp we have in all our pk3 so far.
-    foreach($bsplist as $mapname=>$bsp) {
-        foreach($indexlist as $refmapname=>$refbsp) {
-            // Compare both the name and the crc. If at least one match, then it's a duplicate
-            if (!strcmp($mapname, $refmapname) or $bsp['crc'] == $refbsp['crc'] or $bsp['size'] == 0) {
-                $valid = false;
-                $offender = $bsp['filename'];
-                break 2;
+    if (!empty($indexlist) and !empty($bsplist)) { // only check if the indexlist exists (else it means we have 0 map, no need to check)
+        foreach($bsplist as $mapname=>$bsp) {
+            foreach($indexlist as $refmapname=>$refbsp) {
+                // Compare both the name and the crc. If at least one match, then it's a duplicate
+                if (!strcmp($mapname, $refmapname) or $bsp['crc'] == $refbsp['crc'] or $bsp['size'] == 0) {
+                    $valid = false;
+                    $offender = $bsp['filename'];
+                    break 2;
+                }
             }
         }
     }
@@ -199,7 +201,7 @@ function listBsp($filename, $ziplist=null) {
     global $conf;
 
     // == Check file existence
-    if (!(file_exists($filename)) ) return array(-1, "File $filename not found.");
+    if (!(file_exists($filename)) ) return array();
 
     // == Open the zip file
     $archive = new PclZip($filename);
@@ -208,6 +210,9 @@ function listBsp($filename, $ziplist=null) {
     if (!isset($ziplist)) {
         $ziplist = $archive->listContent();
     }
+
+    // If there's nothing at all in the zip file, we return an empty array
+    if (empty($ziplist)) return array();
 
     // == Find all the bsp maps
     $bsplist = array();
@@ -246,6 +251,8 @@ function listAllBsp($dir=null) {
 
 
 // Extract extended informations and resources for all maps/bsp inside a pk3 (eg: levelshot, description/readme, .arena file)
+// Note: this function works by comparing the name of a bsp to any other file in the same pk3, and trying to find files with a similar name. This is also how the ioquake3 engine works because there's no index in the pk3, BUT it may not work for other games!
+// TODO: maybe try to make a facade function that will plug differently working functions according to the game engine? This will allow to define functions that will work with other game engines that store index files/metadata files.
 function extractThumbnailAndInfos($filename, $ziplist=null, $bsplist=null) {
     global $conf;
 
@@ -259,33 +266,78 @@ function extractThumbnailAndInfos($filename, $ziplist=null, $bsplist=null) {
     if (!isset($ziplist)) {
         $ziplist = $archive->listContent();
     }
+    if (empty($ziplist)) return null;
 
-    // == Get the list of BSP maps if not given
+    // == Get the list of BSP maps inside this pk3 (if not given in arguments)
     if (!isset($bsplist)) {
-        $bsplist = listBsp($filename, $ziplist);
+        $bsplist = listBsp($filename, $ziplist); // this bsplist is critical and is used to compare and get the extended informations
     }
-    $indexlist = readIndexFile();
+    if (empty($bsplist)) return null;
+
+    // == Get the list of all bsp maps in our storagedir (reading from the bsplist index)
+    $indexlist = readIndexFile(); // this is only used to update the bsplist index with extended informations
 
     // == Find the Levelshot (map thumbnail) and extended informations
     //$filename_parts = pathinfo($filename); // remove the file extension (stored inside 'filename' index)
+    // Preparing the image extensions filter
+    $imgextarr = array();
+    foreach ($conf['allowed_image_extensions'] as $imgext) {
+        $imgextarr[] = preg_quote($imgext); // for each extension, we protect the special characters (like the .)
+    }
+    $image_extensions = implode('|', $imgextarr); // implode and separate with a | (OR)
+    // Loop through all compressed files in the zip
     foreach ($ziplist as $cfile) {
+        // Loop through all bsp maps from this pk3. We will then compare and try to find a few files with the same name (this is the only way we have to identify the files that are directly related with the map, and this is also how the ioquake3 engine works since there is no index defined in the pk3; this may not be the case for other games!)
         foreach ($bsplist as $mapname=>$additionalinfos) {
-            // Extract levelshot (map thumbnail)
-            if ( preg_match('/^\/?levelshots\/'.$mapname.'\.jpg$/i', $cfile['filename']) === 1 ) {
-                $rtncode = $archive->extractByIndex($cfile['index'], $conf['thumbdir'], 'levelshots');
+
+            // Extract levelshot (map thumbnail image)
+            if ( preg_match('/^\/?levelshots\/('.$mapname.'('.$image_extensions.'))$/i', $cfile['filename'], $match) === 1 ) {
+                // First remove the file if it exists, because pclzip->extractByIndex() does not overwrite
+                if (file_exists($conf['thumbdir'].'/'.$match[1])) @unlink($conf['thumbdir'].'/'.$match[1]);
+                // Extract and move the file at the same time
+                $rtncode = $archive->extractByIndex($cfile['index'], $conf['thumbdir'], 'levelshots'); // levelshots will be removed from the path, else the fullpath will be extracted, not just the image (it will create thumbnails/levelshots/yourimage.jpg instead of just thumbnails/yourimage.jpg)
+                // Check the error code
                 if ($rtncode === 0) return array(-1, 'Couldn\'t extract the map\'s levelshot thumbnail: '.$cfile['filename']);
-            // Extract .txt extended description file (readme file)
-            } elseif ( preg_match('/'.$mapname.'\.txt/i', $cfile['filename']) === 1 // either we look for a mapname.txt description file...
-                      or preg_match('/^README(.txt)?$/i', $cfile['filename']) === 1) { // ...or either a README at the root
+                // If it's a tga, we can't just show it in a web browser. So we must first convert it to jpg
+                if ($match[2] === '.tga') {
+                    $imgpath = $conf['thumbdir'].'/'.$match[1]; // path to the tga file
+                    tga2jpg($imgpath); // convert and save a .jpg file with the same basename
+                    @unlink($imgpath); // delete the old tga file
+                }
+
+            // Extract .txt extended description file
+            } elseif ( preg_match('/^(.*)('.$mapname.'\.txt)/i', $cfile['filename'], $match) === 1 ) { // either we look for a mapname.txt description file...
+                // First remove the file if it exists, because pclzip->extractByIndex() does not overwrite
+                if (file_exists($conf['thumbdir'].'/'.$match[2])) @unlink($conf['thumbdir'].'/'.$match[2]); // Accessorily, it also serves to remove a previous readme if we find a specific description file for this map (see below)
+                // Extract and move the file at the same time
+                $rtncode = $archive->extractByIndex($cfile['index'], $conf['thumbdir'], $match[1]);
+                // Check the error code
+                if ($rtncode === 0) return array(-1, 'Couldn\'t extract the description file: '.$cfile['filename']);
+
+            // Extract readme as .txt extended description file (but only if a specific description file for the map was not found)
+            } elseif ( preg_match('/^(README(.txt)?)$/i', $cfile['filename'], $match) === 1 ) { // ...or either a README at the root
+                // First remove the file if it exists, because pclzip->extractByIndex() does not overwrite
+                if (file_exists($conf['thumbdir'].'/'.$match[1])) @unlink($conf['thumbdir'].'/'.$match[1]); // Accessorily, it also serves to remove a previous readme if we find a specific description file for this map (see below)
+                // Extract and move the file at the same time
                 $rtncode = $archive->extractByIndex($cfile['index'], $conf['thumbdir']);
+                // Check the error code
                 if ($rtncode === 0) return array(-1, 'Couldn\'t extract the description file: '.$cfile['filename']);
                 // if the file is named README, we rename it to the same filename as the bsp
-                if (preg_match('/^README(.txt)?$/i', $cfile['filename'], $match) === 1) {
-                    @rename($conf['thumbdir'].'/'.$match[0], $filename_parts['filename'].'.txt');
+                $readmetemp = $conf['thumbdir'].'/'.$match[0];
+                // We are not sure that the readme is the description file for the map, or for the whole pk3: we can have both at the same time. In this case, we give the priority to the specific description for the map, and delete the readme. Else we use the readme as the description (and anyway it can then be overwritten if we later find a specific description for the map).
+                if (file_exists($conf['thumbdir'].'/'.$mapname.'.txt')) {
+                    @unlink($readmetemp); // delete the readme
+                } else { // else, at this moment of the loop, the readme is the only description we have for the map, so we keep it
+                    @rename($readmetemp, $conf['thumbdir'].'/'.$mapname.'.txt');
                 }
+
             // Extract .arena short description file
-            } elseif ( preg_match('/^(.*)'.$mapname.'\.arena/i', $cfile['filename'], $match) === 1 ) {
+            } elseif ( preg_match('/^(.*)('.$mapname.'\.arena)/i', $cfile['filename'], $match) === 1 ) {
+                // First remove the file if it exists, because pclzip->extractByIndex() does not overwrite
+                if (file_exists($conf['thumbdir'].'/'.$match[2])) @unlink($conf['thumbdir'].'/'.$match[2]);
+                // Extract and move the file at the same time
                 $rtncode = $archive->extractByIndex($cfile['index'], $conf['thumbdir'], $match[1]); // we match and remove everything in the path prior to the file (ie: any parent folder, so that we just extract this file only)
+                // Check the error code
                 if ($rtncode === 0) {
                     return array(-1, 'Couldn\'t extract the arena file: '.$cfile['filename']);
                 // If copying is OK, then we also parse and extract the extended informations
@@ -413,14 +465,30 @@ function rebuildIndexFile($dir=null) {
 function rebuildFull($dir=null) {
     global $conf;
 
+    // By default, we work on the maps stored in the global storagedir
     if (empty($dir)) $dir = $conf['storagedir'];
 
     try {
+        // Rebuild the bsplist index
         rebuildIndexFile($dir);
-        $filesList = listFiles($dir);
-        foreach ($filesList as $file) {
-            extractThumbnailAndInfos($dir.'/'.$file);
+
+        // Clean up (delete) all files in the thumbdir
+        $filesList = listFiles($conf['thumbdir']);
+        if (!empty($filesList)) {
+            foreach ($filesList as $file) {
+                @unlink($conf['thumbdir'].'/'.$file);
+            }
         }
+
+        // Extract all extended resources from all pk3 for all maps in our bsplist
+        $filesList = listFiles($dir);
+        if (!empty($filesList)) {
+            foreach ($filesList as $file) {
+                extractThumbnailAndInfos($dir.'/'.$file);
+            }
+        }
+
+    // Exception handling
     } catch(Exception $e) {
         return array(-1, $e);
     }
@@ -473,24 +541,55 @@ function readIndexFile($nojsondecode=false, $indexfile=null) {
     return $bsplist;
 }
 
-function removePk3($filename, $ziplist=null) {
+// Delete a pk3 while updating the bsplist index and deleting all associated resources in the thumbdir
+// Note: a pk3 should never be deleted manually, but always through this function. Else you will have an outdated bsplist, showing ghost maps that do no longer exist on the server!
+function removePk3($filename) {
     global $conf;
 
-    if (!(file_exists($conf['storagedir'].'/'.$filename)) ) return array(-1, "File $filename not found.");
+    $dir = $conf['storagedir'];
+    $thumbdir = $conf['thumbdir'];
 
+    // First check that there's no directory traversal attempt
+    list($errcode, $errmsg) = checkDirectoryTraversal($dir, $dir . '/' . $filename);
+    if ($errcode != 0) return array(-1, $errmsg);
+
+    // Check that the file existts
+    if (!(file_exists($dir.'/'.$filename)) ) return array(-1, "File $filename not found.");
+
+    // Delete the file while updating the bsplist index
     try {
+        // Get the bsplist index
         $bsplist = readIndexFile();
 
-        $nbsplist = array();
+        // Search in the bsplist index for all bsp that are contained in this pk3, and remove those occurrences
+        $nbsplist = array(); // this will store all the bsp from all pk3 except the bsp that are contained in the pk3 we are removing
+        $rbsplist = array(); // the opposite: we store here the list of the bsp in the pk3 we are removing (necessary later to remove the extended resources)
         foreach($bsplist as $mapname=>$bsp) {
-            if(strpos($bsp['pk3'], $filename) === FALSE) {
+            if( stripos($bsp['pk3'], $filename) === FALSE) {
                 $nbsplist[$mapname] = $bsp;
+            } else {
+                $rbsplist[] = $mapname;
             }
         }
 
+        // Save the resulting bsplist index (without the removed bsp)
         writeIndexFile($nbsplist);
 
+        // Delete the pk3
         @unlink($conf['storagedir'].'/'.$filename);
+
+        // Delete all associated resources to any bsp map contained in this pk3
+        //$filename_parts = pathinfo($filename);
+        //$basename = $filename_parts['filename'];
+        $filesList = listFiles($thumbdir);
+        foreach ($filesList as $file) {
+            foreach ($rbsplist as $mapname) {
+                // If the file name contains the same mapname + just an extension, we remove it. Note: we must be careful, if we have mapname.txt and mapname2.txt, we don't want to remove both when we remove mapname.pk3, just mapname.txt and leave mapname2.txt
+                if (preg_match("/^".preg_quote($mapname)."(\.[^.]*)$/i", $file, $match)) @unlink($thumbdir.'/'.$match[0]);
+            }
+        }
+
+    // Exception handling
     } catch (Exception $e) {
         return array(-1, $e);
     }
@@ -519,6 +618,20 @@ function printPath($path) {
     return $path;
 }
 
+// Check a path against a directory traversal attempt by comparing a safe path (given by your code, which is sure), and a user inputted path (which may be unsafe).
+// Basically, this function will compare the safepath against the userpath, and if the safepath is longer than the userpath (or more precisely: if the userpath is in a parent directory than the safepath), this means the userpath is trying to escalate and access a parent directory the user should not be able to access.
+// Thank's to ircmaxell for this algorithm
+function checkDirectoryTraversal($safepath, $userpath) {
+    $realBase = realpath($safepath);
+
+    $realUserPath = realpath(dirname($userpath)); // realpath does not work on inexistant files, so we check on directories (works the same for our purpose)
+    if ($realUserPath === false || strpos($realUserPath, $realBase) !== 0) {
+        return array(-1, "Path is not valid.");
+    } else {
+        return 0;
+    }
+}
+
 // Print and save in a log at the same time a given message
 function printAndLog($msg, $logfile=null) {
     global $conf;
@@ -534,8 +647,11 @@ function printAndLog($msg, $logfile=null) {
         }
     } // else if a $logfile is specified at function call, we use it
 
+    // Get the current time
+    $timestamp = date('Y-m-d H-i-s');
+
     // Saving the message into the log file
-    file_put_contents($logfile, $msg."\n", FILE_APPEND);
+    file_put_contents($logfile, "[$timestamp ".$_SERVER['REMOTE_ADDR']."] $msg"."\n", FILE_APPEND);
 
     // Printing the message on screen
     if (is_array($msg)) { // array, we print_r
@@ -595,6 +711,58 @@ function printTime($secs, $nosingleterm=false){
 
     // Return the final result, a human-readable time
     return $ret;
+}
+
+// Convert any tga image to anything we want
+// Thank's to the anonymous poster on php.net manual! Amazing function, if you read this, kudos!
+function tga2jpg ($image)
+{
+    $handle = fopen($image, "rb");
+    $data = fread($handle, filesize($image));
+    fclose($handle);
+
+    $pointer = 18;
+    $w = fileint (substr ($data, 12, 2));
+    $h = fileint (substr ($data, 14, 2));
+    $x = 0;
+    $y = $h;
+
+    $img = imagecreatetruecolor($w, $h);
+
+    while ($pointer < strlen($data))
+    {
+        imagesetpixel ($img, $x, $y, fileint (substr ($data, $pointer, 3)));
+
+        $x++;
+
+        if ($x == $w)
+        {
+            $y--;
+            $x = 0;
+        }
+
+        $pointer += 3;
+    }
+
+    for($a = 0; $a < imagecolorstotal ($img); $a++)
+    {
+        $color = imagecolorsforindex ($img, $a);
+
+        $R=.299 * ($color['red'])+ .587 * ($color['green'])+ .114 * ($color['blue']);
+        $G=.299 * ($color['red'])+ .587 * ($color['green'])+ .114 * ($color['blue']);
+        $B=.299 * ($color['red'])+ .587 * ($color['green'])+ .114 * ($color['blue']);
+
+        imagecolorset ($img, $a, $R, $G, $B);
+    }
+
+    imagejpeg ($img, substr($image, 0, -4).'.jpg', 100);
+    imagedestroy ($img);
+}
+
+// Necessary for tga2jpg
+function fileint($str)
+{
+    return base_convert (bin2hex (strrev ($str)), 16, 10);
 }
 
 ?>

@@ -1,6 +1,17 @@
 MAP-MANAGER CHANGELOG
 =====================
 
+From v1.0 to v1.1: 2013-02-16
+-----------------------------
+x Critical security risk: mapremote.php?remove can ../ (directory traversal), should filter that!
+x arena infos not parsed into bsplist index file at upload (but at rebuildfull OK)
+x add download link in table
+x rebuildfull does not clean the thumbdir before putting the new files
+x reuploading a map (after manual deletion) does not update the resources in thumbdir (no overwrite). It should!
+x sometimes, the .txt files are uploaded at the root and with filename '.txt' (no prefixed name!).
+x case no more matters (eg: MAP.pk3 and map.pk3 can no more be both uploaded). This is necessary for extended resources, where the case may differ (the readme MAP.txt can be called maP.txt or whatever, so we must deal with it).
+x mapremote.php remove did not clean the thumbnails directory
+x now accepts more than .jpg for levelshots (can configure any image extension we want) + tga are automatically converted to jpg to be able to show them in a web browser.
 
 From v0.0.1 to v1.0 (first public release): 2013-02-16
 ------------------------------------------------------

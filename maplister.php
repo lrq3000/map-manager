@@ -40,6 +40,13 @@ require_once('lib.php');
 <?php
 // == Maps listing mode
 if (!isset($_GET['map'])) {
+
+    // Loading the list of bsp from index
+    $bsplist = readIndexFile();
+
+    if (empty($bsplist)) { // check that there's at least one map to show
+        print("<p>No map to show.</p>");
+    } else {
 ?>
 
 <p>You will find below the list of all the maps that are available on the server.</p>
@@ -49,12 +56,11 @@ if (!isset($_GET['map'])) {
 		<th>Levelshot</th>
 		<th>Mapname</th>
                 <th>Contained in pk3</th>
+                <th>Download pk3</th>
                 <?php if (isset($_SESSION['auth']) && $_SESSION['auth'] === 'yes') echo '<th>Admin commands</th>'; ?>
 	</tr>
-	<?php
-        // Loading the list of bsp from index
-        $bsplist = readIndexFile();
 
+        <?php
         // Preparing image redimensionning if specified
         $imgwidth = '';
         $imgheight = '';
@@ -68,17 +74,24 @@ if (!isset($_GET['map'])) {
 	<tr class="<?php echo $count % 2 == 0 ? 'alt' : ''; ?>">
 		<td><?php
                 // Printing an image in the first cell if available
-                $mapimage = $conf['thumbdir'].'/'.$mapname.'.jpg';
-                if (file_exists($mapimage)) echo '<a href="'.$mapimage.'"><img src="'.$mapimage.'" alt="'.$mapname.'_levelshot" title="'.$mapname.'_levelshot" '.$imgwidth.' '.$imgheight.' /></a>';
+                $mapimage = $conf['thumbdir'].'/'.$mapname;
+                foreach ($conf['allowed_image_extensions'] as $ext) {
+                    if (file_exists($mapimage.$ext)) {
+                        echo '<a href="'.$_SERVER['PHP_SELF'].'?map='.$mapname.'"><img src="'.$mapimage.$ext.'" alt="'.$mapname.'_levelshot" title="'.$mapname.'_levelshot" '.$imgwidth.' '.$imgheight.' /></a>';
+                        break;
+                    }
+                }
                 ?></td>
 		<td><?php echo '<span class="mapname"><a href="'.$_SERVER['PHP_SELF'].'?map='.$mapname.'">'.$mapname.'</span></a>'; ?></td>
                 <td><?php echo '<span class="pk3">'.$bsplist[$mapname]['pk3'].'</span></a>'; ?></td>
+                <td><?php echo '<span class="download"><a href="'.printPath($conf['storagedir']).'/'.$bsp['pk3'].'">Download</a></span></a>'; ?></td>
                 <?php if (isset($_SESSION['auth']) && $_SESSION['auth'] === 'yes') echo '<td><a href="mapremote.php?remove='.$bsplist[$mapname]['pk3'].'">Delete the map/pk3</a></td>'; ?>
 	</tr>
 	<?php } ?>
 </table>
 
 <?php
+    }
 // == Map info mode (more detailed info about one bsp)
 } else {
     // Loading the list of bsp from index
@@ -95,8 +108,13 @@ if (!isset($_GET['map'])) {
 ?>
 <p>
 <?php
-        $mapimage = printPath($conf['thumbdir']).'/'.$bsp['mapname'].'.jpg';
-        if (file_exists($mapimage)) echo '<a href="'.$mapimage.'"><img src="'.$mapimage.'" alt="'.$bsp['mapname'].'_levelshot" title="'.$bsp['mapname'].'_levelshot" /></a>';
+        $mapimage = printPath($conf['thumbdir']).'/'.$bsp['mapname'];
+        foreach ($conf['allowed_image_extensions'] as $ext) {
+            if (file_exists($mapimage.$ext)) {
+                echo '<a href="'.printPath($conf['storagedir']).'/'.$bsp['pk3'].'"><img src="'.$mapimage.$ext.'" alt="'.$bsp['mapname'].'_levelshot" title="'.$bsp['mapname'].'_levelshot" /></a>';
+                break;
+            }
+        }
 ?>
 <br />
 <?php
@@ -124,11 +142,11 @@ foreach($bsp as $key=>$val) {
         if (file_exists($mapdesc)) print("Long description:<br />".nl2br(file_get_contents($mapdesc)));
 ?>
 <hr />
-<p>List of files contained in the same PK3:<br />
+<p>List of files contained in the parent PK3:<br />
 <?php
         $filesList = listFilesInZip($conf['storagedir'].'/'.$bsp['pk3']);
         foreach($filesList as $cfile) {
-            print $cfile."\n";
+            print $cfile."<br />\n";
         }
     }
 ?>

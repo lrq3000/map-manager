@@ -84,6 +84,13 @@ $conf['allowed_filename'] = array(    '/^[a-zA-Z1-9].*\.pk3$/i', // engine consi
                                                                     // '/.*\.bsp$/i',
                                                                     );
 
+// Extensions that will be recognized as images when looking for a levelshot for the bsp map
+// no regexp
+$conf['allowed_image_extensions'] = array( '.jpg',
+                                                                                    '.jpeg',
+                                                                                    '.tga', // tga will be automatically converted to jpg to be able to show them in a web browser
+                                                                                    );
+
 
 // == Passwords
 // Note: to generate new passwords hashs, use the provided quick-hash-generator.php script and copy/paste the Obscure hash here in $admin_passwordhash
