@@ -1,0 +1,15 @@
+body {
+    font-family:Verdana, Arial, Geneva, sans-serif, Times;
+    font-size:1em;
+    color:#333;
+    /* background:url(bg.jpg); */
+    text-align: center;
+}
+
+#maplister_table {
+    margin: auto;
+}
+
+.alt {
+    background: lightgrey;
+}

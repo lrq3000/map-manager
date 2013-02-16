@@ -1,0 +1,14 @@
+MAP-MANAGER TODO
+================
+
+
+TODO
+----
+- Nothing here!
+
+MAYBE/SOMEDAY
+-------------
+
+- filter by gametype (looking at the $bsp['type'] that is coming from the .arena file - NOT available for all maps, eg: openarena standard maps because .arena are stored separately in another pk3).
+- allow ratings
+- connect to b3 ratings?

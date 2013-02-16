@@ -1,0 +1,31 @@
+MAP-MANAGER CHANGELOG
+=====================
+
+
+From v0.0.1 to v1.0 (first public release): 2013-02-16
+------------------------------------------------------
+x blacklist + already uploaded files automatically blacklist (just compare the name ou crc, si l'un des deux coincide alors nope)
+x read files directly from zip: all levelshot, all txt (first levelshot is shown as thumbnail)
+x bsp list dans txt: reprendre le code de oa-clan-planner?
+bspname pk3name crc
+mapname (bsp no ext)|md5 ou sha1|pk3from
+json encode!
+mapname -> array avec more infos
+x Try/Catch pour enregistrer fichier et log bsp, et catch rollback garder en mémoire le log bsp
+x admin page remove pk3 and metadata log
+x limit number of successful uploads per day per ip (session) to 5 (configurable in config.php) EXCEPT admin
+x check at least 1 bsp and size > 0
+prevent pk3 with 0 size bsp?
+x engine consider pk3 files as soon as they contain .pk3, even if there's something else after. So filter any file that contains \.pk3.*
+x filesize checking clientside and progress bar
+x HTTP download (get list with full webpath, a script can work with that afterwards)
+x reCaptcha
+x upload files (multiple files) voir si ca fonctionne (faire le script php necessaire)
+x mapname.arena file parse and use data (on pourrait le storer dans bsplist? ou extract?)
+crc ok?
+x file uploader ajax log write in file optionally?
+x bug when upload file: temp file gets _ instead of - in name. Dans la fct aux, car $_REQUEST['name'] est OK.
+x manage AJAX error messages (show them: for example if the checkFile is false).
+x map lister table cells background color change every line alternatively
+x login page (ajoute delete dans le listing des maps) en utilisant session
+x If a pk3 which is not a zip is uploaded, what happens? try/catch to delete the temp file?
