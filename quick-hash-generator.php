@@ -22,7 +22,7 @@
  * \description     Admin and download password hash generator
  */
 
-include_once('lib-crypt.php');
+include_once(dirname(__FILE__).'/lib-crypt.php');
 ?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">

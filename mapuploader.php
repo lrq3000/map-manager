@@ -26,10 +26,10 @@
 session_start();
 
 // Include the config file (will load a $conf[] array)
-require_once('config.php');
+require_once(dirname(__FILE__).'/config.php');
 
 // Include required libraries
-require_once('lib.php');
+require_once(dirname(__FILE__).'/lib.php');
 
 
 // == Process the uploaded files (store them in the local temp folder)

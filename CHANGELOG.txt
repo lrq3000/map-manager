@@ -12,6 +12,8 @@ x sometimes, the .txt files are uploaded at the root and with filename '.txt' (n
 x case no more matters (eg: MAP.pk3 and map.pk3 can no more be both uploaded). This is necessary for extended resources, where the case may differ (the readme MAP.txt can be called maP.txt or whatever, so we must deal with it).
 x mapremote.php remove did not clean the thumbnails directory
 x now accepts more than .jpg for levelshots (can configure any image extension we want) + tga are automatically converted to jpg to be able to show them in a web browser.
+x updated the tga library, the new one should work correctly with any tga
+x more robust includes (relative to the location of the script files instead of the parent calling script)
 
 From v0.0.1 to v1.0 (first public release): 2013-02-16
 ------------------------------------------------------

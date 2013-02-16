@@ -23,8 +23,8 @@
  */
 
 session_start();
-include_once('config.php');
-include_once('lib.php');
+include_once(dirname(__FILE__).'/config.php');
+include_once(dirname(__FILE__).'/lib.php');
 ?>
 <html>
     <head>

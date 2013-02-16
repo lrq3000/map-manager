@@ -23,8 +23,8 @@
  */
 
 session_start();
-require_once('config.php');
-require_once('lib.php');
+require_once(dirname(__FILE__).'/config.php');
+require_once(dirname(__FILE__).'/lib.php');
 
 $rights = array('admin'=>false, 'download'=>false);
 if (isset($_REQUEST['password'])) {
