@@ -29,3 +29,5 @@ x manage AJAX error messages (show them: for example if the checkFile is false).
 x map lister table cells background color change every line alternatively
 x login page (ajoute delete dans le listing des maps) en utilisant session
 x If a pk3 which is not a zip is uploaded, what happens? try/catch to delete the temp file?
+x Fixed a bug in maplister complaining that there was no $_SESSION['auth']
+x Added AGPL logo at the bottom

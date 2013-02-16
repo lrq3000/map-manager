@@ -96,7 +96,7 @@ include_once('lib.php');
                         unique_names : false, // if enabled, we get a totally random name for the file and we can't find the original name
 
                         // Various other settings
-                        max_file_size: '<?php print $conf['maxfilesize'];?>b',
+                        max_file_size: '<?php print $conf['maxfilebytes'];?>b',
                         drop_element: '#html4_uploader',
                         multiple_queues: true,
                         filters : [
@@ -234,9 +234,9 @@ include_once('lib.php');
             } elseif (!$conf['captcha'] or (isset($_SESSION['captchaok']) && $_SESSION['captchaok']) ) {
         ?>
             <p>You can use this form to upload your maps (format .pk3) to the server.</p>
-            <?php if ($conf['maxfilesize'] > 0) {
+            <?php if ($conf['maxfilebytes'] > 0) {
             ?>
-                <p>Note: files are limited to a maximum size of <?php print floor($conf['maxfilesize'] / 1024); ?> KBytes per file.</p>
+                <p>Note: files are limited to a maximum size of <?php print floor($conf['maxfilebytes'] / 1024); ?> KBytes per file.</p>
             <?php
             }
             if ($conf['maxnbuploads'] > 0) {
@@ -257,6 +257,8 @@ include_once('lib.php');
             }
         }
         ?>
+
+    <a href="http://www.gnu.org/licenses/agpl.html" target="_blank"><img src="agplv3.png" alt="This application is licensed under Affero GPL v3+" title="This application is licensed under Affero GPL v3+" /></a>
 
     </body>
 </html>

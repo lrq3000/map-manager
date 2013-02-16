@@ -49,7 +49,7 @@ if (!isset($_GET['map'])) {
 		<th>Levelshot</th>
 		<th>Mapname</th>
                 <th>Contained in pk3</th>
-                <?php if ($_SESSION['auth']) echo '<th>Admin commands</th>'; ?>
+                <?php if (isset($_SESSION['auth']) && $_SESSION['auth'] === 'yes') echo '<th>Admin commands</th>'; ?>
 	</tr>
 	<?php
         // Loading the list of bsp from index
@@ -73,7 +73,7 @@ if (!isset($_GET['map'])) {
                 ?></td>
 		<td><?php echo '<span class="mapname"><a href="'.$_SERVER['PHP_SELF'].'?map='.$mapname.'">'.$mapname.'</span></a>'; ?></td>
                 <td><?php echo '<span class="pk3">'.$bsplist[$mapname]['pk3'].'</span></a>'; ?></td>
-                <?php if ($_SESSION['auth']) echo '<td><a href="mapremote.php?remove='.$bsplist[$mapname]['pk3'].'">Delete the map/pk3</a></td>'; ?>
+                <?php if (isset($_SESSION['auth']) && $_SESSION['auth'] === 'yes') echo '<td><a href="mapremote.php?remove='.$bsplist[$mapname]['pk3'].'">Delete the map/pk3</a></td>'; ?>
 	</tr>
 	<?php } ?>
 </table>
@@ -136,6 +136,8 @@ foreach($bsp as $key=>$val) {
 <?php
 }
 ?>
+
+<a href="http://www.gnu.org/licenses/agpl.html" target="_blank"><img src="agplv3.png" alt="This application is licensed under Affero GPL v3+" title="This application is licensed under Affero GPL v3+" /></a>
 
 </body>
 </html>
