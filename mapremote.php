@@ -55,10 +55,11 @@ if ( !$rights['admin'] and !$rights['download'] and (!isset($_SESSION['auth']) o
     // Action: download PK3 list
     } elseif (isset($_REQUEST['dlpk3list'])) {
         $filesList = listFiles($conf['storagedir'], '*.pk3');
-        $rooturl = dirname($_SERVER['SCRIPT_NAME']).'/'.$conf['storagedir'];
-        if (substr($rooturl, -1) === '/') $rooturl = substr($rooturl, 0, -1); // remove the last '/' if it's there (because we add one after, so it's better to avoid double slash)
+        //$rooturl = dirname($_SERVER['SCRIPT_NAME']).'/'.$conf['storagedir'];
+        //if (substr($rooturl, -1) === '/') $rooturl = substr($rooturl, 0, -1); // remove the last '/' if it's there (because we add one after, so it's better to avoid double slash)
         foreach ($filesList as $file) {
-            print $rooturl.'/'.$file."\n";
+            //print $rooturl.'/'.$file."\n"; // print the full absolute url relative to the root
+            print $file."\n"; // print only the filename (easier for string comparison, when you compare this list with your local list of pk3 to synchronize)
         }
     }
 
