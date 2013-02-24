@@ -72,16 +72,19 @@ def sync(finallist, download_url, storagedir):
     import urllib
     try:
         for file in finallist:
-            # Set the download url
-            download_fullurl = download_url+'/'+file
-            # Set the local path
-            if storagedir: # set the path if a directory was specified
-                localfile = fullpath(os.path.join(storagedir, file))
-            else:
-                localfile = fullpath(file)
-            # Download the file
-            print("\n  0%% Downloading %s" % file, end="")
-            urllib.urlretrieve(download_fullurl, localfile, reporthook=dlProgress)
+            try: # Fail only for this file if an error occurs, and then continue onto the next file
+                # Set the download url
+                download_fullurl = download_url+'/'+file
+                # Set the local path
+                if storagedir: # set the path if a directory was specified
+                    localfile = fullpath(os.path.join(storagedir, file))
+                else:
+                    localfile = fullpath(file)
+                # Download the file
+                print("\n  0%% Downloading %s" % file, end="")
+                urllib.urlretrieve(download_fullurl, localfile, reporthook=dlProgress)
+            except Exception as err:
+                print('ERROR: an error occurred while downloading the file %s. Error: %s' % (file, err))
     except Exception as err:
         print('ERROR: Sync failed: Could not remotely download the pk3 files and sync. Error:'+str(err))
 
