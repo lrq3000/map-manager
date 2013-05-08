@@ -91,6 +91,14 @@ $conf['allowed_image_extensions'] = array( '.jpg',
                                                                                     '.tga', // tga will be automatically converted to jpg to be able to show them in a web browser
                                                                                     );
 
+// == Other securities
+
+// Max real size of compressed files (avoid exploits when a very big bsp of several GB is compressed into a tiny pk3, this makes any ioquake3 server crash)
+$conf['allowed_maxbytes_in_pk3'] = 21600000;
+
+// Max total real size of all compressed files inside a pk3
+$conf['allowed_maxtotalbytes_in_pk3'] = 216000000;
+
 
 // == Passwords
 // Note: to generate new passwords hashs, use the provided quick-hash-generator.php script and copy/paste the Obscure hash here in $admin_passwordhash

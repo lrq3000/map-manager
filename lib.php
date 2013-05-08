@@ -137,7 +137,7 @@ function checkFile($filename, $dir=null, $ziplist=null) {
 
     // == Check blacklist in pk3
     if (!empty($conf['blacklist_in_pk3'])) {
-        // TODO: should check if an almost infinite recursive folder zipped can prevent the function from working correctly and the file to be uploaded after the error?
+        // TODO: should check if an almost infinite recursive folder zipped can prevent the function from working correctly and the file to be uploaded after the error? The try/catch should normally prevent such an exploit, but someone has to try this to make sure.
         $valid = false; // in case there's an error, by default the file can't be uploaded
         try {
             $valid = true;
@@ -162,6 +162,39 @@ function checkFile($filename, $dir=null, $ziplist=null) {
         // Check the result
         if (!$valid) return array(-1, "A filename in your pk3 zipfile is not allowed: $offender");
     }
+
+    // == Check real size of compressed files
+    // Avoid exploits when a very big bsp of several GB is compressed into a tiny pk3, this makes any ioquake3 server crash
+    $valid = false; // in case there's an error, by default the file can't be uploaded
+    try {
+        $valid = true;
+        $totalcsize = 0;
+        // For each compressed file in the zip
+        foreach($ziplist as $cfile) { // $cfile = compressed file
+            // Check that all files have a size below the allowed threshold
+            if ($cfile['size'] > $conf['allowed_maxbytes_in_pk3']) {
+                $valid = false;
+                $offender = $cfile['filename'];
+                break;
+            }
+
+            $totalcsize += $cfile['size'];
+        }
+
+        // Check now that the sum of all files sizes is below the allowed threshold
+        if($totalcsize > $conf['allowed_maxtotalbytes_in_pk3']) {
+            $valid = false;
+            $offender = "sum of all files is too big";
+        }
+    // If an error happened, we break and won't upload the file
+    } catch(Exception $e) {
+        $valid = false;
+        $offender = $e;
+    }
+
+    // Check the result
+    if (!$valid) return array(-1, "One or several files in your pk3 are too big: $offender");
+
 
     // == Check duplicates
     $fileslist = listFiles($conf['storagedir']);
