@@ -43,7 +43,7 @@ USAGE
 - For the clients to see the list of uploaded maps: maplister.php
 - For admin access (unlimited uploads and quick commands to delete maps or rebuild the index): admin.php
 - For remote administration and fetching the maps listing, use: mapremote.php
-- To manage the transfert of the maps from the webserver to your game server, a sample script is provided in samples/mapsync.py.
+- To manage the transfert of the maps from the webserver to your game server, a sample script is provided in samples/mapsync.py. This Python 2 script is meant to be placed on your game server, and it will connect to the map-manager on the webserver and download the map to your gameserver's map folder.
 
 This software is designed for both the user and administrator in mind. When new maps are uploaded, the administrator can check the list of maps and download the new maps by using the mapremote.php file and a "download password" so that only the admin (or the people having this password) can get the maps list.
 
