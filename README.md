@@ -43,6 +43,7 @@ USAGE
 - For the clients to see the list of uploaded maps: maplister.php
 - For admin access (unlimited uploads and quick commands to delete maps or rebuild the index): admin.php
 - For remote administration and fetching the maps listing, use: mapremote.php
+- To manage the transfert of the maps from the webserver to your game server, a sample script is provided in samples/mapsync.py.
 
 This software is designed for both the user and administrator in mind. When new maps are uploaded, the administrator can check the list of maps and download the new maps by using the mapremote.php file and a "download password" so that only the admin (or the people having this password) can get the maps list.
 
@@ -62,7 +63,7 @@ Note: you can also use your password hash to avoid transmitting in clear your pa
 
 Advices:
 - you can (and should!) put this script on another web server than your game server. This will allow for a better load balancing (the user uploading/downloading maps from the web server won't slow down the players on the game server). It is also advised in your game server to allow and set an HTTP download pointing to your webserver (eg: in OpenArena use set /sv_dlURL "your_web_adress").
-- A remote script should be used on your game server to synchronize the maps between the uploaded maps and your game server's maps. Eg: rsync via FTP, or just make your own bash script using wget (wget the dlpk3list and then make the difference to know what's new and then wget the maps you miss on your game server).
+- A remote script should be used on your game server to synchronize the maps between the uploaded maps and your game server's maps. Eg: rsync via FTP, or just make your own bash script using wget (wget the dlpk3list and then make the difference to know what's new and then wget the maps you miss on your game server). The script samples/mapsync.py implements a similar strategy to wget, so you can use this script if you're comfortable with Python.
 - A cron job should be set to regularly rebuild (or even rebuildfull) the bsplist index.
 - The admin/mapremote.php remove command should be used to delete maps rather than deleting manually using the FTP. Using the remove command will ensure that the bsplist index file will always be up-to-date. As an alternative, if you really need to be able to manually delete the maps, be sure to rebuild the index file just after, or at least set a cron job to do that.
 
